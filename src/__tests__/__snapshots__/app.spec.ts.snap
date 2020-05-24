@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should return query from schema and mocks 1`] = `
+Object {
+  "data": Object {
+    "user": null,
+  },
+}
+`;
