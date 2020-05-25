@@ -1,5 +1,5 @@
 {
-  "name": "graphql-mock",
+  "name": "graphql-mock-api",
   "version": "1.0.0",
   "dependencies": {
     "@babel/polyfill": "^7.8.7",

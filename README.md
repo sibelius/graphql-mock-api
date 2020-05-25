@@ -1,4 +1,4 @@
-# GraphQL Mock
+# GraphQL Mock API
 
 Send `schema` and `mocks` inside POST body to mock any GraphQL schema
 
