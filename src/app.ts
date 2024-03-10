@@ -1,10 +1,17 @@
 import Koa from 'koa';
 import logger from 'koa-logger';
 import Router from 'koa-router';
-import cors from 'kcors';
-import graphqlHttp from 'koa-graphql';
+import cors from '@koa/cors';
+import { graphqlHTTP } from 'koa-graphql';
 import bodyParser from 'koa-bodyparser';
-import { makeExecutableSchema, addMocksToSchema } from 'graphql-tools';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { addMocksToSchema } from '@graphql-tools/mock';
+import fs from  'fs';
+import util from 'util';
+import path from 'path';
+import { debugConsole } from './debugConsole';
+
+const readFile = util.promisify(fs.readFile);
 
 const app = new Koa();
 
@@ -17,44 +24,33 @@ app.on('error', err => {
 });
 
 app.use(logger());
-app.use(cors());
+app.use(cors( { maxAge: 86400, origin: '*' }));
+
+app.use(async (ctx, next) => {
+  await next();
+
+  debugConsole(ctx.body);
+})
 
 router.get('/', async ctx => {
   ctx.body = 'Welcome to GraphQL Mock server';
 });
 
-app.use(async (ctx, next) => {
-  const { schema, mocks = {} } = ctx.request.body;
+router.all('/api/graphql', graphqlHTTP(async (request: Request, ctx: Response, koaContext: KoaContext) => {
+  const { mocks = {
+    DateTime: () => new Date().toISOString(),
+  } }= koaContext;
 
-  if (!schema) {
-    ctx.status = 400;
-    ctx.body = 'missing schema on body parameter'
-    return;
-  }
+  const typeDefs = await readFile(path.join(__dirname, 'schema.graphql'), 'utf8');
 
-  ctx.typeDefs = schema;
-  ctx.mocks = mocks;
-
-  await next();
-})
-
-router.all('/graphql', graphqlHttp(async (request: Request, ctx: Response, koaContext: KoaContext) => {
-  const { typeDefs, mocks } = koaContext;
-
-  const schema = makeExecutableSchema({ typeDefs });
-
-  addMocksToSchema({ schema, mocks });
+  const schema = addMocksToSchema({
+    schema: makeExecutableSchema({ typeDefs }),
+    mocks
+  });
 
   return {
     graphiql: true,
     schema,
-    formatError: (error) => {
-      return {
-        message: error.message,
-        locations: error.locations,
-        stack: error.stack,
-      };
-    }
   }
 }));
 

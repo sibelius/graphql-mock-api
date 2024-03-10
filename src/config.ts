@@ -12,5 +12,5 @@ dotenvSafe.config({
 });
 
 export const config = {
-  GRAPHQL_PORT: process.env.GRAPHQL_PORT || 4555,
+  GRAPHQL_PORT: process.env.GRAPHQL_PORT || 3000,
 }
